@@ -11,11 +11,18 @@ class WebsiteController extends Controller
 {
     public function home()
     {
-        // Get latest published posts (limit to 3 for homepage)
+        // Get latest published posts (limit to 3 for homepage main section)
         $latestPosts = Post::where('published', true)
             ->with(['author', 'likes'])
             ->orderBy('created_at', 'desc')
             ->take(3)
+            ->get();
+            
+        // Get more posts for the sticky sidebar
+        $sidebarPosts = Post::where('published', true)
+            ->with(['author', 'likes'])
+            ->orderBy('created_at', 'desc')
+            ->take(6)
             ->get();
             
         // Get menu items for navigation
@@ -23,7 +30,7 @@ class WebsiteController extends Controller
             ->orderBy('order')
             ->get();
             
-        return view('website.home', compact('latestPosts', 'menuItems'));
+        return view('website.home', compact('latestPosts', 'sidebarPosts', 'menuItems'));
     }
     
     public function about()

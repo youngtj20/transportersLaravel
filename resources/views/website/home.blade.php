@@ -5,6 +5,91 @@
 @section('keywords', 'Transporters for Tinubu 2027, Nigeria, Transportation, Good Governance, Campaign, 2027 Elections')
 
 @section('content')
+<!-- Sticky Latest Posts Sidebar -->
+<div id="sticky-posts-sidebar" class="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 w-80 hidden lg:block">
+    <div class="bg-white rounded-xl shadow-xl p-6 border border-gray-200 max-h-[70vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4 bg-[#008e39] p-4 rounded-lg -m-2">
+            <div>
+                <h3 class="text-lg font-bold text-white">Trending Now</h3>
+                <p class="text-sm text-white/90">Latest updates from our movement</p>
+            </div>
+            <button id="close-sticky-posts" class="text-white/80 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4">
+            @if(isset($sidebarPosts) && $sidebarPosts->count() > 0)
+                @foreach($sidebarPosts as $post)
+                    <div class="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-newspaper text-white text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-semibold text-gray-900 truncate">
+                                    <a href="{{ route('blog.show', $post->slug) }}" class="hover:text-green-600 transition-colors">
+                                        {{ $post->title }}
+                                    </a>
+                                </h4>
+                                <p class="text-xs text-gray-500 mt-1">{{ $post->created_at->format('M d, Y') }}</p>
+                                <p class="text-xs text-gray-600 mt-1 line-clamp-2">
+                                    {{ Str::limit(strip_tags($post->excerpt ?? $post->content), 80) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div class="text-center py-4">
+                    <i class="fas fa-newspaper text-gray-300 text-2xl mb-2"></i>
+                    <p class="text-sm text-gray-500">No recent posts</p>
+                </div>
+            @endif
+        </div>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <a href="{{ route('blog') }}" class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                View All Posts
+                <i class="fas fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Add CSS for sticky sidebar -->
+<style>
+    #sticky-posts-sidebar {
+        max-height: calc(100vh - 2rem);
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    @media (min-width: 1024px) {
+        #sticky-posts-sidebar {
+            height: calc(100vh - 4rem);
+        }
+    }
+</style>
+
+<!-- Add JavaScript for sticky sidebar functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stickySidebar = document.getElementById('sticky-posts-sidebar');
+    const closeButton = document.getElementById('close-sticky-posts');
+    
+    // Always show the sidebar on homepage
+    stickySidebar.style.display = 'block';
+    
+    if (closeButton) {
+        closeButton.addEventListener('click', function() {
+            stickySidebar.style.display = 'none';
+            // Don't store in localStorage - sidebar will reappear on next visit
+        });
+    }
+});
+</script>
+
 <!-- Hero Section with Image -->
 <section class="relative pt-20 pb-0 px-0 overflow-hidden">
     <!-- Background Image -->
@@ -18,7 +103,7 @@
     </div>
     
     <!-- Content -->
-    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 pr-0 lg:pr-80">
         <div class="text-center">
             <div class="mb-6 inline-block">
                 <div class="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-green-600 inline-flex items-center">
@@ -82,7 +167,7 @@
 
 <!-- Features Section -->
 <section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto pr-0 lg:pr-80">
         <div class="text-center mb-16">
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Why We Stand Together
@@ -138,7 +223,7 @@
 
 <!-- Transport Sectors -->
 <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto pr-0 lg:pr-80">
         <div class="text-center mb-16">
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Across All Transport Sectors
@@ -211,7 +296,7 @@
 
 <!-- Latest Blog Posts -->
 <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto pr-0 lg:pr-80">
         <div class="text-center mb-16">
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Latest News & Updates
@@ -279,7 +364,7 @@
 
 <!-- Testimonials -->
 <section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto pr-0 lg:pr-80">
         <div class="text-center mb-16">
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Voices from the Community

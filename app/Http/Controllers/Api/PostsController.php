@@ -17,11 +17,27 @@ class PostsController extends ApiController
     {
         $query = Post::with('author');
 
-        if ($request->has('published')) {
-            $query->where('published', $request->published === 'true');
+        // Handle search
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('content', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('excerpt', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // Handle status filter
+        if ($request->has('status')) {
+            if ($request->status === 'published') {
+                $query->where('published', true);
+            } elseif ($request->status === 'draft') {
+                $query->where('published', false);
+            }
         }
         
-        if ($request->has('category')) {
+        // Handle category filter
+        if ($request->has('category') && $request->category) {
             $query->where('category', $request->category);
         }
         
@@ -29,9 +45,22 @@ class PostsController extends ApiController
             $query->where('slug', $request->slug);
         }
 
-        $posts = $query->orderBy('updated_at', 'desc')->get();
+        // Paginate results (10 per page)
+        $posts = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        return $this->success(PostResource::collection($posts));
+        // Transform to resource collection
+        $postsCollection = PostResource::collection($posts);
+
+        // Return with pagination metadata
+        return $this->success([
+            'data' => $postsCollection->resolve(),
+            'current_page' => $posts->currentPage(),
+            'last_page' => $posts->lastPage(),
+            'per_page' => $posts->perPage(),
+            'total' => $posts->total(),
+            'from' => $posts->firstItem(),
+            'to' => $posts->lastItem(),
+        ]);
     }
 
     /**

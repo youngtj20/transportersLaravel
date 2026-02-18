@@ -34,6 +34,16 @@ Route::get('/pages/{id}', [PagesController::class, 'show']);
 Route::get('/posts', [PostsController::class, 'index']);
 Route::get('/posts/{id}', [PostsController::class, 'show']);
 
+// Test route for debugging
+Route::get('/test-posts', function() {
+    $posts = \App\Models\Post::with('author')->get();
+    return response()->json([
+        'total_posts' => $posts->count(),
+        'posts' => $posts->toArray(),
+        'message' => 'Debug info'
+    ]);
+});
+
 // Post interaction routes
 Route::post('/posts/{id}/like', [PostInteractionController::class, 'toggleLike']);
 Route::get('/posts/{id}/like-counts', [PostInteractionController::class, 'getLikeCounts']);

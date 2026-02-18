@@ -201,12 +201,6 @@
         });
         
         function loadPosts(page = 1) {
-            // Validate that we have a token
-            if (!apiToken) {
-                showNotification('Authentication error: No API token available. Please log in again.', 'error');
-                return;
-            }
-            
             // Show loading indicator
             document.getElementById('loadingIndicator').classList.remove('hidden');
             document.getElementById('postsTableContainer').classList.add('hidden');
@@ -223,8 +217,7 @@
             fetch(`/api/posts?${params}`, {
                 headers: {
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Authorization': 'Bearer ' + apiToken
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
             .then(response => {
@@ -234,8 +227,8 @@
                 return response.json();
             })
             .then(data => {
-                renderPosts(data.data);
-                updatePagination(data);
+                renderPosts(data.data.data);
+                updatePagination(data.data);
             })
             .catch(async error => {
                 let errorMessage = 'Failed to load posts.';
