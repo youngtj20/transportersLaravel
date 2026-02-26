@@ -40,163 +40,157 @@
 <!-- Main Content -->
 <div class="py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Gallery Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            <!-- Gallery Counter -->
-            <div class="col-span-full">
-                <div class="text-center py-4">
-                    <p class="text-gray-600 text-lg">
-                        <i class="fas fa-camera mr-2"></i>
-                        Showing {{ $eventGalleries->sum(function($gallery) { return is_array($gallery->images) ? count($gallery->images) : (is_string($gallery->images) ? count(json_decode($gallery->images, true) ?: []) : 0); }) }} photos 
-                        @if(request()->has('event') && request()->event !== 'all')
-                            from <span class="font-semibold text-blue-600">{{ request()->event }}</span>
-                        @else
-                            from all events
-                        @endif
-                    </p>
-                </div>
-            </div>
+        <!-- Gallery Counter -->
+        <div class="text-center py-4 mb-8">
+            <p class="text-gray-600 text-lg">
+                <i class="fas fa-camera mr-2"></i>
+                Showing {{ $eventGalleries->count() }} events with {{ $eventGalleries->sum(function($gallery) { return is_array($gallery->images) ? count($gallery->images) : (is_string($gallery->images) ? count(json_decode($gallery->images, true) ?: []) : 0); }) }} total photos
+                @if(request()->has('event') && request()->event !== 'all')
+                    from <span class="font-semibold text-blue-600">{{ request()->event }}</span>
+                @else
+                    from all events
+                @endif
+            </p>
+        </div>
+        
+        <!-- Grouped Event Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-12">
             @forelse($eventGalleries as $gallery)
-                @if(!empty($gallery->images) && is_array($gallery->images))
-                    @foreach($gallery->images as $image)
-                        @php
-                            // Handle different image path formats and check if file exists
+                @php
+                    // Handle different image path formats and check if file exists
+                    $firstImageUrl = '';
+                    $firstValidImage = null;
+                    $imageCount = 0;
+                    
+                    if(!empty($gallery->images) && is_array($gallery->images)) {
+                        $imageCount = count($gallery->images);
+                        foreach($gallery->images as $image) {
                             $imagePath = $image;
                             $fullPath = '';
                             
                             if(Str::startsWith($image, 'http') || Str::startsWith($image, 'https')) {
                                 $imageUrl = $image;
-                                $isValid = true; // Assume external URLs are valid
+                                $isValid = true;
                             } elseif(Str::startsWith($image, 'data:')) {
                                 $imageUrl = $image;
-                                $isValid = true; // Data URLs are valid
+                                $isValid = true;
                             } else {
-                                // Clean the path and check if file exists
                                 $cleanPath = ltrim(str_replace(['\\', '/'], '/', $image), '/');
                                 $fullPath = public_path($cleanPath);
-                                    
-                                    // Make sure the path starts with 'images/' for security
-                                    if(strpos($cleanPath, 'images/') === 0) {
-                                        $imageUrl = asset($cleanPath);
-                                        $isValid = file_exists($fullPath);
-                                    } else {
-                                        // For backward compatibility, prepend 'images/'
-                                        $cleanPath = 'images/' . $cleanPath;
-                                        $fullPath = public_path($cleanPath);
-                                        $imageUrl = asset($cleanPath);
-                                        $isValid = file_exists($fullPath);
-                                    }
-                                }
-                        @endphp
-                        <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 bg-white" 
-                             onclick="openLightbox('{{ $imageUrl }}', '{{ addslashes($gallery->title) }}', '{{ addslashes($gallery->description ?? '') }}', '{{ $gallery->event_date ? $gallery->event_date->format('M d, Y') : '' }}', '{{ addslashes($gallery->event_name) }}')">
-                            <div class="aspect-square overflow-hidden">
                                 
-                                @if($isValid)
-                                    <img src="{{ $imageUrl }}" alt="{{ $gallery->title }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" onerror="this.onerror=null; this.src='{{ asset('images/hero-transport.jpg') }}'; this.alt='Image not available';">
-                                @else
-                                    <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                                        <div class="text-center">
-                                            <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
-                                            <p class="text-gray-500 text-sm">Image not available</p>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                <div class="text-white text-center">
-                                    <i class="fas fa-expand-arrows-alt text-3xl mb-2"></i>
-                                    <p class="font-medium text-sm">View Full Size</p>
-                                </div>
-                            </div>
-                            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                                <h3 class="text-white font-bold text-lg">{{ $gallery->title }}</h3>
-                                <p class="text-gray-200 text-sm mt-1">
-                                    <i class="fas fa-calendar mr-1"></i>
-                                    {{ $gallery->event_date ? $gallery->event_date->format('M d, Y') : '' }}
-                                    @if($gallery->event_name)
-                                        <span class="mx-2">•</span>
-                                        <i class="fas fa-tag mr-1"></i>
-                                        {{ $gallery->event_name }}
-                                    @endif
-                                </p>
-                            </div>
-                        </div>
-                    @endforeach
-                @elseif(!empty($gallery->images) && is_string($gallery->images))
-                    @php
-                        $images = json_decode($gallery->images, true);
-                    @endphp
-                    @if(is_array($images))
-                        @foreach($images as $image)
-                            @php
-                                // Handle different image path formats and check if file exists
+                                if(strpos($cleanPath, 'images/') === 0) {
+                                    $imageUrl = asset($cleanPath);
+                                    $isValid = file_exists($fullPath);
+                                } else {
+                                    $cleanPath = 'images/' . $cleanPath;
+                                    $fullPath = public_path($cleanPath);
+                                    $imageUrl = asset($cleanPath);
+                                    $isValid = file_exists($fullPath);
+                                }
+                            }
+                            
+                            if($isValid) {
+                                $firstImageUrl = $imageUrl;
+                                $firstValidImage = $image;
+                                break;
+                            }
+                        }
+                    } elseif(!empty($gallery->images) && is_string($gallery->images)) {
+                        $decodedImages = json_decode($gallery->images, true);
+                        if(is_array($decodedImages)) {
+                            $imageCount = count($decodedImages);
+                            foreach($decodedImages as $image) {
                                 $imagePath = $image;
                                 $fullPath = '';
                                 
                                 if(Str::startsWith($image, 'http') || Str::startsWith($image, 'https')) {
                                     $imageUrl = $image;
-                                    $isValid = true; // Assume external URLs are valid
+                                    $isValid = true;
                                 } elseif(Str::startsWith($image, 'data:')) {
                                     $imageUrl = $image;
-                                    $isValid = true; // Data URLs are valid
+                                    $isValid = true;
                                 } else {
-                                    // Clean the path and check if file exists
                                     $cleanPath = ltrim(str_replace(['\\', '/'], '/', $image), '/');
                                     $fullPath = public_path($cleanPath);
                                     
-                                    // Make sure the path starts with 'images/' for security
                                     if(strpos($cleanPath, 'images/') === 0) {
                                         $imageUrl = asset($cleanPath);
                                         $isValid = file_exists($fullPath);
                                     } else {
-                                        // For backward compatibility, prepend 'images/'
                                         $cleanPath = 'images/' . $cleanPath;
                                         $fullPath = public_path($cleanPath);
                                         $imageUrl = asset($cleanPath);
                                         $isValid = file_exists($fullPath);
                                     }
                                 }
-                            @endphp
-                            <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 bg-white" 
-                                 onclick="openLightbox('{{ $imageUrl }}', '{{ addslashes($gallery->title) }}', '{{ addslashes($gallery->description ?? '') }}', '{{ $gallery->event_date ? $gallery->event_date->format('M d, Y') : '' }}', '{{ addslashes($gallery->event_name) }}')">
-                                <div class="aspect-square overflow-hidden">
-                                    
-                                    @if($isValid)
-                                        <img src="{{ $imageUrl }}" alt="{{ $gallery->title }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" onerror="this.onerror=null; this.src='{{ asset('images/hero-transport.jpg') }}'; this.alt='Image not available';">
-                                    @else
-                                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                                            <div class="text-center">
-                                                <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
-                                                <p class="text-gray-500 text-sm">Image not available</p>
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                    <div class="text-white text-center">
-                                        <i class="fas fa-expand-arrows-alt text-3xl mb-2"></i>
-                                        <p class="font-medium text-sm">View Full Size</p>
-                                    </div>
-                                </div>
-                                <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                                    <h3 class="text-white font-bold text-lg">{{ $gallery->title }}</h3>
-                                    <p class="text-gray-200 text-sm mt-1">
-                                        <i class="fas fa-calendar mr-1"></i>
-                                        {{ $gallery->event_date ? $gallery->event_date->format('M d, Y') : '' }}
-                                        @if($gallery->event_name)
-                                            <span class="mx-2">•</span>
-                                            <i class="fas fa-tag mr-1"></i>
-                                            {{ $gallery->event_name }}
-                                        @endif
-                                    </p>
-                                </div>
+                                
+                                if($isValid) {
+                                    $firstImageUrl = $imageUrl;
+                                    $firstValidImage = $image;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // If no valid images found, use fallback
+                    if(empty($firstImageUrl)) {
+                        $firstImageUrl = asset('images/hero-transport.jpg');
+                    }
+                @endphp
+                
+                <div class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 bg-white border border-gray-200" 
+                     onclick="openEventLightbox({{ json_encode($gallery->toArray()) }})">
+                    <!-- Event Image Preview -->
+                    <div class="aspect-square overflow-hidden relative">
+                        <img src="{{ $firstImageUrl }}" alt="{{ $gallery->title }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.onerror=null; this.src='{{ asset('images/hero-transport.jpg') }}'; this.alt='Image not available';">
+                        
+                        <!-- Overlay Gradient -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        <!-- Event Badge -->
+                        <div class="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow">
+                            <i class="fas fa-image mr-1"></i>{{ $imageCount }}
+                        </div>
+                        
+                        <!-- Expand Icon -->
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div class="bg-white bg-opacity-30 backdrop-blur-sm rounded-full p-3 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                <i class="fas fa-expand-arrows-alt text-white text-xl"></i>
                             </div>
-                        @endforeach
-                    @endif
-                @endif
+                        </div>
+                    </div>
+                    
+                    <!-- Event Details -->
+                    <div class="p-4">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1 truncate">{{ $gallery->title }}</h3>
+                        
+                        <div class="space-y-1 text-xs text-gray-600 mb-2">
+                            @if($gallery->event_name)
+                                <div class="flex items-center truncate">
+                                    <i class="fas fa-calendar text-blue-500 mr-1 text-xs"></i>
+                                    <span class="truncate">{{ $gallery->event_name }}</span>
+                                </div>
+                            @endif
+                            
+                            @if($gallery->event_date)
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock text-green-500 mr-1 text-xs"></i>
+                                    <span>{{ $gallery->event_date->format('M d, Y') }}</span>
+                                </div>
+                            @endif
+                            
+                            <div class="flex items-center">
+                                <i class="fas fa-image text-purple-500 mr-1 text-xs"></i>
+                                <span>{{ $imageCount }} photos</span>
+                            </div>
+                        </div>
+                        
+                        @if($gallery->description)
+                            <p class="text-gray-500 text-xs line-clamp-2">{{ $gallery->description }}</p>
+                        @endif
+                    </div>
+                </div>
             @empty
                 <div class="col-span-full text-center py-12">
                     <i class="fas fa-images text-5xl text-gray-300 mb-4"></i>
@@ -205,15 +199,6 @@
                 </div>
             @endforelse
         </div>
-        
-        @if($eventGalleries->count() > 0)
-        <!-- Load More -->
-        <div class="text-center">
-            <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition duration-300">
-                <i class="fas fa-sync-alt mr-2"></i>Load More Photos
-            </button>
-        </div>
-        @endif
     </div>
 </div>
 
@@ -324,87 +309,160 @@
     </div>
 </div>
 
-<!-- Lightbox Modal -->
-<div id="lightboxModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-90 flex items-center justify-center p-4">
-    <div class="relative max-w-6xl w-full max-h-full flex flex-col">
+<!-- Event Lightbox Modal -->
+<div id="eventLightboxModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-95 flex items-center justify-center p-4">
+    <div class="relative max-w-7xl w-full max-h-full flex flex-col">
         <!-- Close Button -->
-        <button onclick="closeLightbox()" class="absolute top-4 right-4 z-10 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition-all duration-200">
+        <button onclick="closeEventLightbox()" class="absolute top-4 right-4 z-10 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition-all duration-200 z-20">
             <i class="fas fa-times text-2xl"></i>
         </button>
         
-        <!-- Navigation Buttons -->
-        <button id="prevBtn" onclick="navigateLightbox(-1)" class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-3 transition-all duration-200">
+        <!-- Navigation Buttons (will be enabled if there are multiple events to navigate) -->
+        <button id="prevEventBtn" onclick="navigateEvent(-1)" class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-3 transition-all duration-200 hidden">
             <i class="fas fa-chevron-left text-xl"></i>
         </button>
-        
-        <button id="nextBtn" onclick="navigateLightbox(1)" class="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-3 transition-all duration-200">
+        <button id="nextEventBtn" onclick="navigateEvent(1)" class="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-3 transition-all duration-200 hidden">
             <i class="fas fa-chevron-right text-xl"></i>
         </button>
         
-        <!-- Image Container -->
-        <div class="flex-1 flex items-center justify-center relative">
-            <img id="lightboxImage" src="" alt="" class="max-h-full max-w-full object-contain">
+        <!-- Event Header -->
+        <div class="bg-black bg-opacity-80 text-white p-6 rounded-t-lg z-10 sticky top-0 backdrop-blur-sm">
+            <h2 id="eventLightboxTitle" class="text-2xl font-bold mb-2"></h2>
+            <div class="flex flex-wrap gap-4 text-sm text-gray-300">
+                <span id="eventLightboxDate" class="flex items-center"></span>
+                <span id="eventLightboxName" class="flex items-center"></span>
+                <span id="eventLightboxCount" class="flex items-center"></span>
+            </div>
         </div>
         
-        <!-- Image Info -->
-        <div class="bg-black bg-opacity-80 text-white p-6 mt-4 rounded-lg">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h3 id="lightboxTitle" class="text-xl font-bold mb-2"></h3>
-                    <p id="lightboxDescription" class="text-gray-300 mb-3"></p>
-                    <div class="flex flex-wrap gap-4 text-sm text-gray-400">
-                        <span id="lightboxDate" class="flex items-center">
-                            <i class="fas fa-calendar mr-2"></i>
-                        </span>
-                        <span id="lightboxEvent" class="flex items-center">
-                            <i class="fas fa-tag mr-2"></i>
-                        </span>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="downloadImage()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 flex items-center">
-                        <i class="fas fa-download mr-2"></i>Download
-                    </button>
-                    <button onclick="shareImage()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors duration-200 flex items-center">
-                        <i class="fas fa-share-alt mr-2"></i>Share
-                    </button>
-                </div>
-            </div>
+        <!-- Event Images Container -->
+        <div id="eventLightboxImagesContainer" class="flex-1 overflow-y-auto p-4 bg-black bg-opacity-20 backdrop-blur-sm rounded-b-lg">
+            <div id="eventLightboxImagesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
         </div>
     </div>
 </div>
 
 <script>
-    let currentImageIndex = 0;
-    let galleryImages = [];
+    let currentEvent = {};
+    let allEvents = [];
+    let currentEventIndex = 0;
     
-    function openLightbox(imageSrc, title, description, date, event) {
-        // Collect all gallery images
-        galleryImages = [];
-        document.querySelectorAll('.group.cursor-pointer').forEach((element, index) => {
-            const img = element.querySelector('img');
-            if (img && img.src) {
-                galleryImages.push({
-                    src: img.src,
-                    title: element.getAttribute('data-title') || title,
-                    description: element.getAttribute('data-description') || description,
-                    date: element.getAttribute('data-date') || date,
-                    event: element.getAttribute('data-event') || event
-                });
-                
-                // Mark the clicked image
-                if (img.src === imageSrc) {
-                    currentImageIndex = index;
+    function openEventLightbox(eventData) {
+        // Set current event data
+        currentEvent = eventData;
+        document.getElementById('eventLightboxTitle').textContent = eventData.title || 'Untitled Event';
+        document.getElementById('eventLightboxDate').innerHTML = `<i class="fas fa-calendar mr-2"></i>${eventData.event_date ? new Date(eventData.event_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'No date'}`;
+        document.getElementById('eventLightboxName').innerHTML = `<i class="fas fa-tag mr-2"></i>${eventData.event_name || 'No event name'}`;
+        document.getElementById('eventLightboxCount').innerHTML = `<i class="fas fa-image mr-2"></i>${Array.isArray(eventData.images) ? eventData.images.length : (typeof eventData.images === 'string' ? JSON.parse(eventData.images || '[]').length : 0)} photos`;
+        
+        // Process and display images
+        let images = [];
+        if (Array.isArray(eventData.images)) {
+            images = eventData.images;
+        } else if (typeof eventData.images === 'string') {
+            images = JSON.parse(eventData.images || '[]');
+        }
+        
+        const imagesGrid = document.getElementById('eventLightboxImagesGrid');
+        imagesGrid.innerHTML = '';
+        
+        images.forEach((image, index) => {
+            // Handle different image formats
+            let imageUrl = image;
+            let isValid = true;
+            
+            if (image.startsWith('http') || image.startsWith('https')) {
+                imageUrl = image;
+                isValid = true;
+            } else if (image.startsWith('data:')) {
+                imageUrl = image;
+                isValid = true;
+            } else {
+                // Handle local paths
+                let cleanPath = image.replace(/^[/\\]+|[/\\]+$/g, '');
+                if (!cleanPath.startsWith('images/')) {
+                    cleanPath = 'images/' + cleanPath;
                 }
+                imageUrl = `{{ asset('') }}${cleanPath}`;
             }
+            
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'group relative aspect-square overflow-hidden rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-all duration-300';
+            imageDiv.onclick = (e) => {
+                // Only trigger if clicking directly on the image, not the overlay
+                if (e.target.tagName === 'IMG' || e.target.classList.contains('fa-plus')) {
+                    openIndividualImageLightbox(imageUrl, eventData.title, index, images);
+                }
+            };
+            
+            imageDiv.innerHTML = `
+                <img src="${imageUrl}" alt="${eventData.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" onerror="this.onerror=null; this.src='{{ asset('images/hero-transport.jpg') }}'; this.alt='Image not available';">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center cursor-pointer" onclick="event.stopPropagation(); openIndividualImageLightbox('${imageUrl.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${eventData.title.replace(/'/g, "\\'")}', ${index}, JSON.parse('${JSON.stringify(images).replace(/'/g, "\\'")}'))">
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white text-center transform scale-75 group-hover:scale-100">
+                        <i class="fas fa-plus text-2xl"></i>
+                    </div>
+                </div>
+            `;
+            
+            imagesGrid.appendChild(imageDiv);
         });
         
+        // Show modal
+        document.getElementById('eventLightboxModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function openIndividualImageLightbox(imageSrc, title, currentIndex, allImages) {
+        // Close the event lightbox first
+        closeEventLightbox();
+        // Then open the individual image lightbox
+        openLightbox(imageSrc, title, '', '', '', currentIndex, allImages);
+    }
+    
+    // Update the openLightbox function to handle the event gallery images properly
+    function openLightbox(imageSrc, title, description, date, event, startIndex = 0, allImages = []) {
+        // If we have a list of all images from the event, use them
+        if (allImages && allImages.length > 0) {
+            galleryImages = allImages.map(img => {
+                let imageUrl = img;
+                if (img.startsWith('http') || img.startsWith('https')) {
+                    imageUrl = img;
+                } else if (img.startsWith('data:')) {
+                    imageUrl = img;
+                } else {
+                    let cleanPath = img.replace(/^[/\\]+|[/\\]+$/g, '');
+                    if (!cleanPath.startsWith('images/')) {
+                        cleanPath = 'images/' + cleanPath;
+                    }
+                    imageUrl = `{{ asset('') }}${cleanPath}`;
+                }
+                return {
+                    src: imageUrl,
+                    title: title,
+                    description: description,
+                    date: date,
+                    event: event
+                };
+            });
+            currentImageIndex = startIndex;
+        } else {
+            // Fallback to collecting from page (for single image clicks)
+            galleryImages = [{
+                src: imageSrc,
+                title: title,
+                description: description,
+                date: date,
+                event: event
+            }];
+            currentImageIndex = 0;
+        }
+        
         // Set current image
-        document.getElementById('lightboxImage').src = imageSrc;
-        document.getElementById('lightboxTitle').textContent = title;
-        document.getElementById('lightboxDescription').textContent = description;
-        document.getElementById('lightboxDate').innerHTML = `<i class="fas fa-calendar mr-2"></i>${date}`;
-        document.getElementById('lightboxEvent').innerHTML = `<i class="fas fa-tag mr-2"></i>${event}`;
+        document.getElementById('lightboxImage').src = galleryImages[currentImageIndex].src;
+        document.getElementById('lightboxTitle').textContent = galleryImages[currentImageIndex].title;
+        document.getElementById('lightboxDescription').textContent = galleryImages[currentImageIndex].description;
+        document.getElementById('lightboxDate').innerHTML = `<i class="fas fa-calendar mr-2"></i>${galleryImages[currentImageIndex].date}`;
+        document.getElementById('lightboxEvent').innerHTML = `<i class="fas fa-tag mr-2"></i>${galleryImages[currentImageIndex].event}`;
         
         // Show/hide navigation buttons
         document.getElementById('prevBtn').classList.toggle('hidden', galleryImages.length <= 1);
@@ -412,8 +470,72 @@
         
         // Show modal
         document.getElementById('lightboxModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeEventLightbox() {
+        document.getElementById('eventLightboxModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    function navigateEvent(direction) {
+        // Navigation between events (if needed in future)
+    }
+
+    // Individual image lightbox for when viewing images within an event
+    let currentImageIndex = 0;
+    let galleryImages = [];
+    
+    function openLightbox(imageSrc, title, description, date, event, startIndex = 0, allImages = []) {
+        // If we have a list of all images from the event, use them
+        if (allImages && allImages.length > 0) {
+            galleryImages = allImages.map(img => {
+                let imageUrl = img;
+                if (img.startsWith('http') || img.startsWith('https')) {
+                    imageUrl = img;
+                } else if (img.startsWith('data:')) {
+                    imageUrl = img;
+                } else {
+                    let cleanPath = img.replace(/^[/\\]+|[/\\]+$/g, '');
+                    if (!cleanPath.startsWith('images/')) {
+                        cleanPath = 'images/' + cleanPath;
+                    }
+                    imageUrl = `{{ asset('') }}${cleanPath}`;
+                }
+                return {
+                    src: imageUrl,
+                    title: title,
+                    description: description,
+                    date: date,
+                    event: event
+                };
+            });
+            currentImageIndex = startIndex;
+        } else {
+            // Fallback to collecting from page (for single image clicks)
+            galleryImages = [{
+                src: imageSrc,
+                title: title,
+                description: description,
+                date: date,
+                event: event
+            }];
+            currentImageIndex = 0;
+        }
         
-        // Prevent body scroll
+        // Set current image
+        document.getElementById('lightboxImage').src = galleryImages[currentImageIndex].src;
+        document.getElementById('lightboxTitle').textContent = galleryImages[currentImageIndex].title;
+        document.getElementById('lightboxDescription').textContent = galleryImages[currentImageIndex].description;
+        document.getElementById('lightboxDate').innerHTML = `<i class="fas fa-calendar mr-2"></i>${galleryImages[currentImageIndex].date}`;
+        document.getElementById('lightboxEvent').innerHTML = `<i class="fas fa-tag mr-2"></i>${galleryImages[currentImageIndex].event}`;
+        
+        // Show/hide navigation buttons
+        document.getElementById('prevBtn').classList.toggle('hidden', galleryImages.length <= 1);
+        document.getElementById('nextBtn').classList.toggle('hidden', galleryImages.length <= 1);
+        
+        // Show modal
+        document.getElementById('lightboxModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
     
@@ -472,6 +594,9 @@
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && !document.getElementById('lightboxModal').classList.contains('hidden')) {
             closeLightbox();
+        }
+        if (e.key === 'Escape' && !document.getElementById('eventLightboxModal').classList.contains('hidden')) {
+            closeEventLightbox();
         }
         
         // Navigation with arrow keys
