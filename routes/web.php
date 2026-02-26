@@ -100,7 +100,8 @@ Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\AdminAuth::clas
     })->name('gallery.create');
     
     Route::get('/gallery/{id}/edit', function ($id) {
-        return view('admin.gallery.edit', compact('id'));
+        $gallery = \App\Models\EventGallery::findOrFail($id);
+        return view('admin.gallery.edit', compact('gallery'));
     })->name('gallery.edit');
 });
 

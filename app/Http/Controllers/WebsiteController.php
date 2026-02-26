@@ -85,16 +85,28 @@ class WebsiteController extends Controller
         return view('website.blog', compact('posts', 'menuItems'));
     }
     
-    public function gallery()
+    public function gallery(Request $request)
     {
         $menuItems = MenuItem::where('enabled', true)->orderBy('order')->get();
         
         // Get published event galleries with images
-        $eventGalleries = \App\Models\EventGallery::where('published', true)
-            ->orderBy('event_date', 'desc')
-            ->get();
+        $query = \App\Models\EventGallery::where('published', true);
         
-        return view('website.gallery', compact('menuItems', 'eventGalleries'));
+        // Filter by event name if provided
+        if ($request->has('event') && $request->event !== 'all') {
+            $query->where('event_name', $request->event);
+        }
+        
+        $eventGalleries = $query->orderBy('event_date', 'desc')->get();
+        
+        // Get unique event names for filter
+        $uniqueEvents = \App\Models\EventGallery::where('published', true)
+            ->pluck('event_name')
+            ->unique()
+            ->filter()
+            ->values();
+        
+        return view('website.gallery', compact('menuItems', 'eventGalleries', 'uniqueEvents'));
     }
     
     public function contact()

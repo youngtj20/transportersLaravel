@@ -17,9 +17,16 @@ class EventGalleryResource extends JsonResource
             'title' => $this->title,
             'event_name' => $this->event_name,
             'event_date' => $this->event_date,
-            'images' => $this->images ?: [],
+            'images' => $this->formatted_images ?: [],
             'published' => $this->published,
             'created_by' => $this->created_by,
+            'description' => $this->description ?? '',
+            'creator' => $this->whenLoaded('creator', function () {
+                return [
+                    'id' => $this->creator->id,
+                    'name' => $this->creator->name,
+                ];
+            }),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

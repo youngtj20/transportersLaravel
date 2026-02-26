@@ -6,6 +6,7 @@
     <title>Create Gallery - Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="bg-gray-100">
     <!-- Admin Header -->
@@ -39,7 +40,7 @@
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-medium text-gray-900">Gallery Details</h2>
             </div>
-            <form id="galleryForm" class="p-6">
+            <form id="galleryForm" class="p-6" novalidate>
                 <div class="grid grid-cols-1 gap-6">
                     <!-- Title -->
                     <div>
@@ -103,6 +104,19 @@
                         </div>
                     </div>
 
+                    <!-- Description -->
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-align-left mr-2"></i>Description
+                        </label>
+                        <textarea 
+                            name="description" 
+                            id="description" 
+                            rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter gallery description"></textarea>
+                    </div>
+
                     <!-- Status -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -125,7 +139,7 @@
                            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-times mr-2"></i>Cancel
                         </a>
-                        <button type="submit" 
+                        <button type="submit" id="createGalleryBtn"
                                 class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-save mr-2"></i>Create Gallery
                         </button>
@@ -141,17 +155,14 @@
     </main>
     
     <script>
-        // Get the API token from session via a meta tag or script variable
-        const apiToken = "{{ session('api_token') }}";
+        // Use session-based authentication for gallery management
+        const apiBaseUrl = '/api';
         
-        // Debug: Log the token to console to verify it exists
-        console.log('API Token:', apiToken ? 'Exists' : 'Missing');
+        // Check if user is authenticated
+        const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
         
-        // Check if token exists, if not, show error message
-        if (!apiToken) {
-            document.addEventListener('DOMContentLoaded', function() {
-                showMessage('Authentication error: No API token available. Please log in again.', 'error');
-            });
+        if (!isAuthenticated) {
+            window.location.href = '{{ route('admin.login') }}';
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -160,14 +171,22 @@
             const messageContent = document.getElementById('messageContent');
             const fileUpload = document.getElementById('file-upload');
             const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            
+            // Debug: Log when DOM is ready
+            console.log('DOM Loaded');
 
             // Handle file upload
             fileUpload.addEventListener('change', function(e) {
                 const files = e.target.files;
-                imagePreviewContainer.innerHTML = ''; // Clear previous previews
                 
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
+                    
+                    // Check file size (limit to 2MB to prevent packet size issues)
+                    if (file.size > 2 * 1024 * 1024) {
+                        showMessage('File size exceeds 2MB limit. Please choose a smaller image.', 'error');
+                        continue;
+                    }
                     
                     if (file.type.startsWith('image/')) {
                         const reader = new FileReader();
@@ -181,6 +200,8 @@
                                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
                                     <i class="fas fa-trash text-white cursor-pointer" onclick="removeImage(this)"></i>
                                 </div>
+                                <input type="hidden" name="image_data[]" value="${e.target.result}">
+                                <input type="hidden" name="image_name[]" value="${file.name}">
                             `;
                             
                             imagePreviewContainer.appendChild(imgContainer);
@@ -194,9 +215,12 @@
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                // Validate that we have a token
-                if (!apiToken) {
-                    showMessage('Authentication error: No API token available. Please log in again.', 'error');
+                // Debug: Log form submission
+                console.log('Form submission triggered');
+                
+                // Validate that user is authenticated
+                if (!isAuthenticated) {
+                    showMessage('Authentication error: Please log in again.', 'error');
                     return;
                 }
                 
@@ -205,41 +229,26 @@
                     title: document.getElementById('title').value,
                     event_name: document.getElementById('event_name').value,
                     event_date: document.getElementById('event_date').value,
-                    images: [], // This would be populated from uploaded images
+                    description: document.getElementById('description').value,
+                    images: [], // This will be populated from uploaded images
                     published: document.getElementById('published').checked
                 };
 
-                // Get selected files
-                const files = fileUpload.files;
+                // Get selected files and their data
+                const imageDataInputs = document.querySelectorAll('input[name="image_data[]"]');
+                const imageNameInputs = document.querySelectorAll('input[name="image_name[]"]');
+                
                 const imageUrls = [];
                 
-                // In a real implementation, we would upload the files first and get URLs
-                // For now, we'll simulate this by using the preview URLs
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    const reader = new FileReader();
+                // Process each image
+                for (let i = 0; i < imageDataInputs.length; i++) {
+                    const imageData = imageDataInputs[i].value;
+                    const imageName = imageNameInputs[i].value;
                     
-                    reader.onload = function(e) {
-                        imageUrls.push(e.target.result);
-                        
-                        if (imageUrls.length === files.length) {
-                            // All files processed, now send the request
-                            submitGallery(formData, imageUrls);
-                        }
-                    };
-                    
-                    reader.readAsDataURL(file);
+                    // Send the actual data URL - the backend will convert it to a file
+                    imageUrls.push(imageData);
                 }
                 
-                // If no files selected, submit anyway
-                if (files.length === 0) {
-                    submitGallery(formData, []);
-                }
-            });
-
-            function submitGallery(formData, imageUrls) {
-                // In a real implementation, we would upload images first and get URLs
-                // For now, we'll send the form data with empty images array
                 formData.images = imageUrls;
                 
                 // Show loading state
@@ -248,24 +257,30 @@
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
 
-                fetch('/api/event-galleries', {
+                submitGallery(formData);
+            });
+
+            function submitGallery(formData) {
+                // Debug: Log form data
+                console.log('Submitting form data:', formData);
+                
+                // Add CSRF token for session-based authentication
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                fetch(`${apiBaseUrl}/event-galleries`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
-                        'Authorization': 'Bearer ' + apiToken
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify(formData)
                 })
                 .then(response => response.json())
                 .then(result => {
-                    console.log('API Response:', result);
-
                     if (result.success) {
                         showMessage('Gallery created successfully!', 'success');
-                        
-                        // Redirect to galleries list after delay
                         setTimeout(() => {
                             window.location.href = '{{ route("admin.gallery.index") }}';
                         }, 1500);
@@ -275,8 +290,6 @@
                             errorMessage = result.message;
                         } else if (result.errors) {
                             errorMessage = Object.values(result.errors).flat().join(', ');
-                        } else if (result.code === 401) {
-                            errorMessage = 'Unauthorized access. Please log in again.';
                         }
                         showMessage(errorMessage, 'error');
                     }
@@ -288,8 +301,10 @@
                 .finally(() => {
                     // Restore button state
                     const submitButton = form.querySelector('button[type="submit"]');
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalText;
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Create Gallery';
+                    }
                 });
             }
 

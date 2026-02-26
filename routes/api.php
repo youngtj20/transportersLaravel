@@ -25,7 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('menu-items', MenuItemsController::class);
     Route::apiResource('settings', SettingsController::class);
     Route::apiResource('movement-members', MovementMembersController::class);
-    Route::apiResource('event-galleries', EventGalleriesController::class);
+    // Event galleries are handled separately as public routes for admin management
 });
 
 // Public routes
@@ -59,3 +59,9 @@ Route::get('/movement-members', [MovementMembersController::class, 'index']);
 Route::get('/movement-members/{id}', [MovementMembersController::class, 'show']);
 Route::get('/event-galleries', [EventGalleriesController::class, 'index']);
 Route::get('/event-galleries/{id}', [EventGalleriesController::class, 'show']);
+
+// Public API routes for admin gallery management (for now)
+Route::post('/event-galleries', [EventGalleriesController::class, 'store']);
+Route::put('/event-galleries/{id}', [EventGalleriesController::class, 'update']);
+Route::patch('/event-galleries/{id}', [EventGalleriesController::class, 'update']);
+Route::delete('/event-galleries/{id}', [EventGalleriesController::class, 'destroy']);

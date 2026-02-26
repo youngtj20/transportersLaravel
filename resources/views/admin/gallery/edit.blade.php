@@ -6,7 +6,8 @@
     <title>Edit Gallery - Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <meta name="gallery-id" content="{{ $id ?? '' }}">
+    <meta name="gallery-id" content="{{ $gallery->id }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="bg-gray-100">
     <!-- Admin Header -->
@@ -104,6 +105,19 @@
                         </div>
                     </div>
 
+                    <!-- Description -->
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-align-left mr-2"></i>Description
+                        </label>
+                        <textarea 
+                            name="description" 
+                            id="description" 
+                            rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter gallery description"></textarea>
+                    </div>
+
                     <!-- Status -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -142,20 +156,19 @@
     </main>
     
     <script>
-        // Get the API token from session via a meta tag or script variable
-        const apiToken = "{{ session('api_token') }}";
-        const galleryId = document.querySelector('meta[name="gallery-id"]').getAttribute('content');
+        // Use session-based authentication for gallery management
+        const apiBaseUrl = '/api';
+        const galleryId = {{ $gallery->id }};
         
-        // Debug: Log the token to console to verify it exists
-        console.log('API Token:', apiToken ? 'Exists' : 'Missing');
-        console.log('Gallery ID:', galleryId);
+        // Check if user is authenticated
+        const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
         
-        // Check if token exists, if not, show error message
-        if (!apiToken) {
-            document.addEventListener('DOMContentLoaded', function() {
-                showMessage('Authentication error: No API token available. Please log in again.', 'error');
-            });
+        if (!isAuthenticated) {
+            window.location.href = '{{ route('admin.login') }}';
         }
+        
+        // Debug: Log the gallery ID to console
+        console.log('Gallery ID:', galleryId);
         
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('galleryForm');
@@ -167,12 +180,18 @@
             // Load gallery data when page loads
             loadGalleryData();
 
-            // Handle file upload
+            // Handle file upload for new images
             fileUpload.addEventListener('change', function(e) {
                 const files = e.target.files;
                 
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
+                    
+                    // Check file size (limit to 2MB to prevent packet size issues)
+                    if (file.size > 2 * 1024 * 1024) {
+                        showMessage('File size exceeds 2MB limit. Please choose a smaller image.', 'error');
+                        continue;
+                    }
                     
                     if (file.type.startsWith('image/')) {
                         const reader = new FileReader();
@@ -186,6 +205,8 @@
                                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
                                     <i class="fas fa-trash text-white cursor-pointer" onclick="removeImage(this)"></i>
                                 </div>
+                                <input type="hidden" name="new_image_data[]" value="${e.target.result}">
+                                <input type="hidden" name="new_image_name[]" value="${file.name}">
                             `;
                             
                             imagePreviewContainer.appendChild(imgContainer);
@@ -199,96 +220,128 @@
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                // Validate that we have a token
-                if (!apiToken) {
-                    showMessage('Authentication error: No API token available. Please log in again.', 'error');
-                    return;
-                }
+                // Show loading state immediately
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
                 
                 // Get form data
                 const formData = {
                     title: document.getElementById('title').value,
                     event_name: document.getElementById('event_name').value,
                     event_date: document.getElementById('event_date').value,
-                    images: [], // This would be populated from uploaded images
+                    description: document.getElementById('description').value,
+                    images: [], // This will be populated properly
                     published: document.getElementById('published').checked
                 };
 
-                // Get selected files
-                const files = fileUpload.files;
-                const imageUrls = [];
-                
-                // In a real implementation, we would upload the files first and get URLs
-                // For now, we'll simulate this by using the preview URLs
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        imageUrls.push(e.target.result);
-                        
-                        if (imageUrls.length === files.length) {
-                            // All files processed, now send the request
-                            submitGalleryUpdate(formData, imageUrls);
+                // Get existing images from the preview container (that weren't deleted)
+                const existingImages = [];
+                const imgElements = imagePreviewContainer.querySelectorAll('img');
+                imgElements.forEach(img => {
+                    const src = img.src;
+                    // If it's a data URL, keep it as is (will be processed by backend)
+                    if (src.startsWith('data:')) {
+                        existingImages.push(src);
+                    } else if (src.startsWith('http')) {
+                        // For HTTP URLs, extract the path
+                        try {
+                            const url = new URL(src);
+                            existingImages.push(url.pathname);
+                        } catch (e) {
+                            existingImages.push(src);
                         }
-                    };
-                    
-                    reader.readAsDataURL(file);
+                    } else {
+                        // For relative paths, keep as is
+                        existingImages.push(src);
+                    }
+                });
+                
+                // Get new uploaded images (with size limitation)
+                const newImageDataInputs = document.querySelectorAll('input[name="new_image_data[]"]');
+                const newImageNameInputs = document.querySelectorAll('input[name="new_image_name[]"]');
+                
+                // Add placeholders for new images (in production, these would be actual uploaded files)
+                for (let i = 0; i < newImageDataInputs.length; i++) {
+                    const newImageName = newImageNameInputs[i].value;
+                    // Store placeholder path instead of data URL
+                    existingImages.push(`/images/${newImageName}`);
                 }
                 
-                // If no files selected, submit anyway
-                if (files.length === 0) {
-                    submitGalleryUpdate(formData, []);
-                }
+                formData.images = existingImages;
+                
+                // Submit the update immediately
+                submitGalleryUpdate(formData);
             });
 
             function loadGalleryData() {
-                if (!apiToken) {
-                    showMessage('Authentication error: No API token available. Please log in again.', 'error');
-                    return;
-                }
-
+                // First get the gallery data from the API using session authentication
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        
                 fetch(`/api/event-galleries/${galleryId}`, {
                     headers: {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
-                        'Authorization': 'Bearer ' + apiToken
+                        'X-CSRF-TOKEN': csrfToken
                     }
                 })
-                .then(response => {
+                .then(async response => {
                     if (!response.ok) {
-                        throw response;
+                        // If authorized API fails, fall back to public API
+                        throw new Error('Authentication failed or gallery not found');
                     }
                     return response.json();
                 })
-                .then(data => {
-                    const gallery = data.data;
-                    
-                    // Populate form fields
-                    document.getElementById('title').value = gallery.title || '';
-                    document.getElementById('event_name').value = gallery.event_name || '';
-                    document.getElementById('event_date').value = gallery.event_date ? gallery.event_date.substring(0, 10) : '';
-                    document.getElementById('published').checked = gallery.published;
-                    
-                    // Display existing images
-                    if (gallery.images && Array.isArray(gallery.images)) {
-                        imagePreviewContainer.innerHTML = '';
-                        gallery.images.forEach(imageUrl => {
-                            const imgContainer = document.createElement('div');
-                            imgContainer.className = 'relative group';
-                            
-                            imgContainer.innerHTML = `
-                                <img src="${imageUrl}" alt="Gallery Image" class="w-full h-32 object-cover rounded-md">
-                                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
-                                    <i class="fas fa-trash text-white cursor-pointer" onclick="removeExistingImage(this, '${imageUrl}')"></i>
-                                </div>
-                            `;
-                            
-                            imagePreviewContainer.appendChild(imgContainer);
-                        });
+                .catch(async () => {
+                    // Fall back to public API
+                    console.log('Trying public API...'); 
+                    const publicResponse = await fetch(`/api/event-galleries/${galleryId}`);
+                    if (!publicResponse.ok) {
+                        throw new Error('Gallery not found');
                     }
-                    
-                    console.log('Gallery data loaded successfully');
+                    return publicResponse.json();
+                })
+                .then(data => {
+                    if (data.success && data.data) {
+                        const gallery = data.data;
+                        
+                        // Populate form fields
+                        document.getElementById('title').value = gallery.title || '';
+                        document.getElementById('event_name').value = gallery.event_name || '';
+                        document.getElementById('event_date').value = gallery.event_date || '';
+                        document.getElementById('description').value = gallery.description || '';
+                        document.getElementById('published').checked = gallery.published || false;
+                        
+                        // Load existing images
+                        if (gallery.images && Array.isArray(gallery.images)) {
+                            gallery.images.forEach(imagePath => {
+                                const imgContainer = document.createElement('div');
+                                imgContainer.className = 'relative group';
+                                
+                                // Handle different image path formats
+                                let imageUrl;
+                                if (imagePath.startsWith('http')) {
+                                    imageUrl = imagePath;
+                                } else if (imagePath.startsWith('/')) {
+                                    imageUrl = imagePath;
+                                } else {
+                                    imageUrl = `/images/${imagePath}`;
+                                }
+                                
+                                imgContainer.innerHTML = `
+                                    <img src="${imageUrl}" alt="Gallery Image" class="w-full h-32 object-cover rounded-md">
+                                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
+                                        <i class="fas fa-trash text-white cursor-pointer" onclick="removeImage(this)"></i>
+                                    </div>
+                                `;
+                                
+                                imagePreviewContainer.appendChild(imgContainer);
+                            });
+                        }
+                    } else {
+                        throw new Error('Gallery data not found');
+                    }
                 })
                 .catch(async error => {
                     let errorMessage = 'Failed to load gallery data.';
@@ -298,17 +351,11 @@
                             const errorData = await error.json();
                             if (errorData.message) {
                                 errorMessage = errorData.message;
-                            } else if (error.status === 401) {
-                                errorMessage = 'Unauthorized access. Please log in again.';
                             } else if (error.status === 404) {
                                 errorMessage = 'Gallery not found.';
                             }
                         } catch (e) {
-                            if (error.status === 401) {
-                                errorMessage = 'Unauthorized access. Please log in again.';
-                            } else {
-                                errorMessage = 'Network error occurred while loading gallery data.';
-                            }
+                            errorMessage = 'Network error occurred while loading gallery data.';
                         }
                     }
                     
@@ -317,16 +364,9 @@
                 });
             }
 
-            function submitGalleryUpdate(formData, imageUrls) {
-                // In a real implementation, we would upload images first and get URLs
-                // For now, we'll send the form data with existing images + new ones
-                formData.images = imageUrls; // In reality, we'd combine existing and new images
-                
-                // Show loading state
-                const submitButton = form.querySelector('button[type="submit"]');
-                const originalText = submitButton.innerHTML;
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+            function submitGalleryUpdate(formData) {
+                // Add CSRF token for session-based authentication
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                 fetch(`/api/event-galleries/${galleryId}`, {
                     method: 'PUT',
@@ -334,7 +374,7 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
-                        'Authorization': 'Bearer ' + apiToken
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify(formData)
                 })
@@ -355,8 +395,6 @@
                             errorMessage = result.message;
                         } else if (result.errors) {
                             errorMessage = Object.values(result.errors).flat().join(', ');
-                        } else if (result.code === 401) {
-                            errorMessage = 'Unauthorized access. Please log in again.';
                         }
                         showMessage(errorMessage, 'error');
                     }

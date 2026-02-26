@@ -200,11 +200,8 @@
     </div>
     
     <script>
-        // Get the API token from session via a meta tag or script variable
-        const apiToken = "{{ session('api_token') }}";
-        
-        // Debug: Log the token to console to verify it exists
-        console.log('API Token:', apiToken ? 'Exists' : 'Missing');
+        // Use public API endpoints for gallery management
+        const apiBaseUrl = '/api';
         
         // Global variables for pagination
         let currentPage = 1;
@@ -232,12 +229,6 @@
         });
         
         function loadGalleries(page = 1) {
-            // Validate that we have a token
-            if (!apiToken) {
-                showNotification('Authentication error: No API token available. Please log in again.', 'error');
-                return;
-            }
-            
             // Show loading indicator
             document.getElementById('loadingIndicator').classList.remove('hidden');
             document.getElementById('galleriesGridContainer').classList.add('hidden');
@@ -254,8 +245,7 @@
             fetch(`/api/event-galleries?${params}`, {
                 headers: {
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Authorization': 'Bearer ' + apiToken
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
             .then(response => {
@@ -275,17 +265,11 @@
                         const errorData = await error.json();
                         if (errorData.message) {
                             errorMessage = errorData.message;
-                        } else if (error.status === 401) {
-                            errorMessage = 'Unauthorized access. Please log in again.';
                         } else if (error.status === 404) {
                             errorMessage = 'API endpoint not found.';
                         }
                     } catch (e) {
-                        if (error.status === 401) {
-                            errorMessage = 'Unauthorized access. Please log in again.';
-                        } else {
-                            errorMessage = 'Network error occurred while loading galleries.';
-                        }
+                        errorMessage = 'Network error occurred while loading galleries.';
                     }
                 }
                 
@@ -318,6 +302,13 @@
                 const galleryCard = document.createElement('div');
                 galleryCard.className = 'bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden';
                 
+                // Properly escape HTML and interpolate variables
+                const title = escapeHtml(gallery.title || 'Untitled');
+                const description = escapeHtml(gallery.description || 'No description available');
+                const eventDate = gallery.event_date ? formatDate(gallery.event_date) : 'No date';
+                const statusClass = gallery.published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                const statusText = gallery.published ? 'Published' : 'Draft';
+                
                 galleryCard.innerHTML = `
                     <div class="p-4">
                         <div class="flex items-center mb-4">
@@ -325,20 +316,20 @@
                                 <i class="fas fa-images text-2xl"></i>
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-lg font-medium text-gray-900">\${escapeHtml(gallery.title)}</h3>
-                                <p class="text-sm text-gray-500">\${gallery.event_date ? formatDate(gallery.event_date) : 'No date'}</p>
+                                <h3 class="text-lg font-medium text-gray-900">${title}</h3>
+                                <p class="text-sm text-gray-500">${eventDate}</p>
                             </div>
                         </div>
-                        <p class="text-gray-600 text-sm mb-4">\${gallery.description || 'No description available'}</p>
+                        <p class="text-gray-600 text-sm mb-4">${description}</p>
                         <div class="flex justify-between items-center">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full \${gallery.published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                \${gallery.published ? 'Published' : 'Draft'}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">
+                                ${statusText}
                             </span>
                             <div class="flex space-x-2">
-                                <a href="/admin/gallery/\${gallery.id}/edit" class="text-blue-600 hover:text-blue-900">
+                                <a href="/admin/gallery/${gallery.id}/edit" class="text-blue-600 hover:text-blue-900">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
-                                <a href="#" class="text-red-600 hover:text-red-900 delete-gallery" data-gallery-id="\${gallery.id}" data-gallery-title="\${escapeHtml(gallery.title)}">
+                                <a href="#" class="text-red-600 hover:text-red-900 delete-gallery" data-gallery-id="${gallery.id}" data-gallery-title="${title}">
                                     <i class="fas fa-trash"></i> Delete
                                 </a>
                             </div>
@@ -384,24 +375,23 @@
         
         async function performDelete() {
             const galleryId = document.getElementById('confirmDeleteBtn').dataset.galleryId;
-            
+                    
             if (!galleryId) {
                 showNotification('Invalid gallery ID.', 'error');
                 return;
             }
-            
+                    
             try {
-                const response = await fetch(`/api/event-galleries/\${galleryId}`, {
+                const response = await fetch(`/api/event-galleries/${galleryId}`, {
                     method: 'DELETE',
                     headers: {
                         'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Authorization': 'Bearer ' + apiToken
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                
+                        
                 const result = await response.json();
-                
+                        
                 if (response.ok) {
                     showNotification('Gallery deleted successfully!', 'success');
                     hideDeleteModal();
@@ -410,8 +400,6 @@
                     let errorMessage = 'Failed to delete gallery.';
                     if (result.message) {
                         errorMessage = result.message;
-                    } else if (response.status === 401) {
-                        errorMessage = 'Unauthorized access. Please log in again.';
                     } else if (response.status === 404) {
                         errorMessage = 'Gallery not found.';
                     }

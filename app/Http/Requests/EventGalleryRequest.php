@@ -29,7 +29,8 @@ class EventGalleryRequest extends FormRequest
                     'title' => 'required|string|max:255',
                     'event_name' => 'required|string|max:255',
                     'event_date' => 'required|date',
-                    'images' => 'required|array',
+                    'description' => 'nullable|string',
+                    'images' => 'array',
                     'images.*' => 'string',
                     'published' => 'boolean',
                 ];
@@ -39,7 +40,8 @@ class EventGalleryRequest extends FormRequest
                     'title' => 'required|string|max:255',
                     'event_name' => 'required|string|max:255',
                     'event_date' => 'required|date',
-                    'images' => 'required|array',
+                    'description' => 'nullable|string',
+                    'images' => 'array',
                     'images.*' => 'string',
                     'published' => 'boolean',
                 ];
