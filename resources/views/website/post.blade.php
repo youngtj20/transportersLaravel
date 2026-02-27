@@ -84,31 +84,12 @@
                         <!-- Share Buttons -->
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 mb-3">Share this post</h3>
-                            <div class="flex space-x-4">
-                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(url()->current()) }}" 
-                                   target="_blank" 
-                                   class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                    <i class="fab fa-facebook-f mr-2"></i>
-                                    Facebook
-                                </a>
-                                <a href="https://twitter.com/intent/tweet?url={{ urlencode(url()->current()) }}&text={{ urlencode($post->title) }}" 
-                                   target="_blank" 
-                                   class="flex items-center px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors">
-                                    <i class="fab fa-twitter mr-2"></i>
-                                    Twitter
-                                </a>
-                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(url()->current()) }}" 
-                                   target="_blank" 
-                                   class="flex items-center px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors">
-                                    <i class="fab fa-linkedin-in mr-2"></i>
-                                    LinkedIn
-                                </a>
-                                <a href="mailto:?subject={{ urlencode($post->title) }}&body={{ urlencode('Check out this article: ' . url()->current()) }}" 
-                                   class="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                                    <i class="fas fa-envelope mr-2"></i>
-                                    Email
-                                </a>
-                            </div>
+                            <x-social-share 
+                                :url="url()->current()" 
+                                :title="$post->title" 
+                                :description="$post->excerpt ?? $post->content" 
+                                :image="$post->featured_image ?? null" 
+                                type="post" />
                         </div>
                     </div>
                 </div>

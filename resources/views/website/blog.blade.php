@@ -149,30 +149,13 @@
                                             </div>
                                             
                                             <!-- Social Sharing Buttons -->
-                                            <div class="flex space-x-2">
-                                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('blog.show', $post->slug)) }}" 
-                                                   target="_blank" 
-                                                   title="Share on Facebook"
-                                                   class="text-gray-500 hover:text-blue-600">
-                                                    <i class="fab fa-facebook-f"></i>
-                                                </a>
-                                                <a href="https://twitter.com/intent/tweet?url={{ urlencode(route('blog.show', $post->slug)) }}&text={{ urlencode($post->title) }}" 
-                                                   target="_blank" 
-                                                   title="Share on Twitter"
-                                                   class="text-gray-500 hover:text-blue-400">
-                                                    <i class="fab fa-twitter"></i>
-                                                </a>
-                                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('blog.show', $post->slug)) }}" 
-                                                   target="_blank" 
-                                                   title="Share on LinkedIn"
-                                                   class="text-gray-500 hover:text-blue-700">
-                                                    <i class="fab fa-linkedin-in"></i>
-                                                </a>
-                                                <a href="mailto:?subject={{ urlencode($post->title) }}&body={{ urlencode('Check out this article: ' . route('blog.show', $post->slug)) }}" 
-                                                   title="Share via Email"
-                                                   class="text-gray-500 hover:text-gray-700">
-                                                    <i class="fas fa-envelope"></i>
-                                                </a>
+                                            <div class="mt-2">
+                                                <x-social-share 
+                                                    :url="route('blog.show', $post->slug)" 
+                                                    :title="$post->title" 
+                                                    :description="$post->excerpt ?? $post->content" 
+                                                    :image="$post->featured_image ?? null" 
+                                                    type="post" />
                                             </div>
                                             
                                             <a href="{{ route('blog.show', $post->slug) }}" class="text-green-600 hover:text-green-800 font-medium">

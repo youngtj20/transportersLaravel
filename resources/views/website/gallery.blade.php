@@ -189,6 +189,16 @@
                         @if($gallery->description)
                             <p class="text-gray-500 text-xs line-clamp-2">{{ $gallery->description }}</p>
                         @endif
+                        
+                        <!-- Social Sharing for Gallery -->
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <x-social-share 
+                                :url="url()->current()" 
+                                :title="$gallery->title" 
+                                :description="$gallery->description ?? 'Check out these amazing photos from our event!'" 
+                                :image="$firstImageUrl" 
+                                type="gallery" />
+                        </div>
                     </div>
                 </div>
             @empty
@@ -574,7 +584,84 @@
         document.body.removeChild(link);
     }
     
+    function shareCurrentImage() {
+        const imgSrc = document.getElementById('lightboxImage').src;
+        const title = document.getElementById('lightboxTitle').textContent;
+        const description = document.getElementById('lightboxDescription').textContent;
+        
+        // Use the enhanced social sharing component
+        const socialUrls = {
+            facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(imgSrc)}&t=${encodeURIComponent(title)}`,
+            twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(imgSrc)}&text=${encodeURIComponent(title)}`,
+            linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(imgSrc)}`,
+            whatsapp: `https://wa.me/?text=${encodeURIComponent(title + " " + imgSrc)}`,
+            telegram: `https://t.me/share/url?url=${encodeURIComponent(imgSrc)}&text=${encodeURIComponent(title)}`,
+            email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(description + " " + imgSrc)}`
+        };
+        
+        // Show share options dialog
+        showShareOptionsDialog(imgSrc, title, description, socialUrls);
+    }
+    
+    function showShareOptionsDialog(imageSrc, title, description, urls) {
+        const shareHTML = `
+            <div id="imageShareModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Share Image</h3>
+                        <button onclick="closeImageShareModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <a href="${urls.facebook}" target="_blank" class="flex flex-col items-center p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fab fa-facebook-f text-xl mb-1"></i>
+                            <span class="text-xs">Facebook</span>
+                        </a>
+                        <a href="${urls.twitter}" target="_blank" class="flex flex-col items-center p-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                            <i class="fab fa-twitter text-xl mb-1"></i>
+                            <span class="text-xs">Twitter</span>
+                        </a>
+                        <a href="${urls.linkedin}" target="_blank" class="flex flex-col items-center p-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors">
+                            <i class="fab fa-linkedin-in text-xl mb-1"></i>
+                            <span class="text-xs">LinkedIn</span>
+                        </a>
+                        <a href="${urls.whatsapp}" target="_blank" class="flex flex-col items-center p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                            <i class="fab fa-whatsapp text-xl mb-1"></i>
+                            <span class="text-xs">WhatsApp</span>
+                        </a>
+                        <a href="${urls.telegram}" target="_blank" class="flex flex-col items-center p-3 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors">
+                            <i class="fab fa-telegram text-xl mb-1"></i>
+                            <span class="text-xs">Telegram</span>
+                        </a>
+                        <a href="${urls.email}" class="flex flex-col items-center p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-envelope text-xl mb-1"></i>
+                            <span class="text-xs">Email</span>
+                        </a>
+                    </div>
+                    
+                    <button onclick="copyToClipboard('${imageSrc}')" class="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-link mr-2"></i>Copy Image Link
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', shareHTML);
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeImageShareModal() {
+        const modal = document.getElementById('imageShareModal');
+        if (modal) {
+            modal.remove();
+            document.body.style.overflow = '';
+        }
+    }
+    
     function shareImage() {
+        // Fallback to the original function for compatibility
         const imgSrc = document.getElementById('lightboxImage').src;
         if (navigator.share) {
             navigator.share({
