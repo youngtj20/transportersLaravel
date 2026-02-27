@@ -7,6 +7,10 @@
     <meta name="description" content="@yield('description', 'Official website for the Transporters for Tinubu 2027 movement and campaign')">
     <meta name="keywords" content="@yield('keywords', 'transporters, tinubu, 2027, nigeria, campaign, politics')">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('images/logo/logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo/logo.png') }}">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -99,9 +103,7 @@
                 <div class="flex items-center">
                     <!-- Logo -->
                     <div class="flex-shrink-0 flex items-center">
-                        <div class="w-10 h-10 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center shadow-lg">
-                            <span class="text-white font-bold text-xl">T</span>
-                        </div>
+                        <img src="{{ asset('images/logo/logo.png') }}" alt="Transporters for Tinubu 2027" class="w-10 h-10 object-contain rounded-full shadow-lg">
                         <div class="ml-3 hidden sm:block">
                             <span class="text-xl font-bold text-gray-900">Transporters for Tinubu</span>
                             <span class="block text-sm text-green-600 font-semibold">2027</span>
@@ -169,9 +171,7 @@
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
                 <div class="flex items-center justify-between mb-6 mt-2 px-2">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center shadow-lg">
-                            <span class="text-white font-bold text-xl">T</span>
-                        </div>
+                        <img src="{{ asset('images/logo/logo.png') }}" alt="Transporters for Tinubu 2027" class="w-10 h-10 object-contain rounded-full shadow-lg">
                         <div>
                             <span class="text-lg font-bold text-gray-900">Transporters</span>
                             <span class="block text-sm text-green-600 font-semibold">2027</span>
@@ -289,9 +289,7 @@
                 <!-- About Section -->
                 <div>
                     <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                            <span class="text-white font-bold text-xl">T</span>
-                        </div>
+                        <img src="{{ asset('images/logo/logo.png') }}" alt="Transporters for Tinubu 2027" class="w-10 h-10 object-contain rounded-full">
                         <div>
                             <span class="text-lg font-bold">Transporters for Tinubu</span>
                             <span class="block text-sm text-green-400">2027</span>
