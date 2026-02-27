@@ -9,25 +9,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="bg-gray-100">
+
     <!-- Admin Header -->
     <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
-                <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-gray-900">Create New Gallery</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-700">Welcome, {{ auth()->user()->name }}</span>
-                    <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: inline;">
+                <h1 class="text-2xl font-bold text-gray-900">Create New Gallery</h1>
+                <div class="flex items-center space-x-3">
+                    <span class="text-gray-700 text-sm">Welcome, {{ auth()->user()->name }}</span>
+                    <form action="{{ route('admin.logout') }}" method="POST" style="display:inline">
                         @csrf
-                        <button type="submit" 
+                        <button type="submit"
                                 class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            <i class="fas fa-sign-out-alt mr-1"></i>Logout
                         </button>
                     </form>
-                    <a href="{{ route('admin.gallery.index') }}" 
+                    <a href="{{ route('admin.gallery.index') }}"
                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                        <i class="fas fa-arrow-left mr-2"></i>Back to Galleries
+                        <i class="fas fa-arrow-left mr-1"></i>Back to Galleries
                     </a>
                 </div>
             </div>
@@ -40,296 +39,279 @@
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-medium text-gray-900">Gallery Details</h2>
             </div>
+
             <form id="galleryForm" class="p-6" novalidate>
                 <div class="grid grid-cols-1 gap-6">
+
                     <!-- Title -->
                     <div>
                         <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-heading mr-2"></i>Gallery Title
+                            <i class="fas fa-heading mr-2 text-gray-400"></i>Gallery Title <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" 
-                               name="title" 
-                               id="title" 
+                        <input type="text" name="title" id="title"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Enter gallery title"
-                               required>
+                               placeholder="Enter gallery title" required>
                     </div>
 
                     <!-- Event Name -->
                     <div>
                         <label for="event_name" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-calendar mr-2"></i>Event Name
+                            <i class="fas fa-calendar mr-2 text-gray-400"></i>Event Name <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" 
-                               name="event_name" 
-                               id="event_name" 
+                        <input type="text" name="event_name" id="event_name"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Event name"
-                               required>
+                               placeholder="e.g. Lagos Rally 2027" required>
                     </div>
 
                     <!-- Event Date -->
                     <div>
                         <label for="event_date" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-calendar-day mr-2"></i>Event Date
+                            <i class="fas fa-calendar-day mr-2 text-gray-400"></i>Event Date <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" 
-                               name="event_date" 
-                               id="event_date" 
+                        <input type="date" name="event_date" id="event_date"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                required>
                     </div>
 
                     <!-- Gallery Images -->
                     <div>
-                        <label for="images" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-images mr-2"></i>Gallery Images
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-images mr-2 text-gray-400"></i>Gallery Images
+                            <span id="imageCounter" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full hidden">0 selected</span>
                         </label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                            <div class="space-y-1 text-center">
-                                <div class="flex text-sm text-gray-600">
-                                    <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                                        <span>Upload files</span>
-                                        <input id="file-upload" name="file-upload" type="file" class="sr-only" multiple accept="image/*">
+
+                        <!-- Drop Zone -->
+                        <div id="dropZone"
+                             class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-gray-300 border-dashed rounded-md transition-colors duration-200 cursor-pointer hover:border-blue-400 hover:bg-blue-50">
+                            <div class="space-y-2 text-center pointer-events-none">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-300"></i>
+                                <div class="flex text-sm text-gray-600 justify-center">
+                                    <label for="file-upload"
+                                           class="relative cursor-pointer pointer-events-auto bg-transparent rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500">
+                                        <span>Choose files</span>
+                                        <input id="file-upload" name="file-upload" type="file"
+                                               class="sr-only" multiple accept="image/*">
                                     </label>
-                                    <p class="pl-1">or drag and drop</p>
+                                    <p class="pl-1">or drag &amp; drop here</p>
                                 </div>
-                                <p class="text-xs text-gray-500">
-                                    PNG, JPG, GIF up to 10MB
-                                </p>
+                                <p class="text-xs text-gray-500">PNG, JPG, JPEG, GIF — up to 5 MB each</p>
                             </div>
                         </div>
-                        <div id="imagePreviewContainer" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            <!-- Image previews will be added here -->
+
+                        <!-- Preview Grid -->
+                        <div id="imagePreviewContainer"
+                             class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                            <!-- previews injected by JS -->
                         </div>
                     </div>
 
                     <!-- Description -->
                     <div>
                         <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-align-left mr-2"></i>Description
+                            <i class="fas fa-align-left mr-2 text-gray-400"></i>Description
                         </label>
-                        <textarea 
-                            name="description" 
-                            id="description" 
-                            rows="3"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter gallery description"></textarea>
+                        <textarea name="description" id="description" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Describe this gallery or event…"></textarea>
                     </div>
 
                     <!-- Status -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-toggle-on mr-2"></i>Status
+                            <i class="fas fa-toggle-on mr-2 text-gray-400"></i>Status
                         </label>
                         <div class="flex items-center">
-                            <input type="checkbox" 
-                                   name="published" 
-                                   id="published" 
+                            <input type="checkbox" name="published" id="published"
                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <label for="published" class="ml-2 block text-sm text-gray-900">
-                                Publish this gallery
+                            <label for="published" class="ml-2 text-sm text-gray-700">
+                                Publish this gallery (visible on the public website)
                             </label>
                         </div>
                     </div>
 
-                    <!-- Submit Buttons -->
-                    <div class="flex justify-end space-x-4 pt-6">
-                        <a href="{{ route('admin.gallery.index') }}" 
-                           class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-times mr-2"></i>Cancel
+                    <!-- Actions -->
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <a href="{{ route('admin.gallery.index') }}"
+                           class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-times mr-1"></i>Cancel
                         </a>
                         <button type="submit" id="createGalleryBtn"
                                 class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-save mr-2"></i>Create Gallery
+                            <i class="fas fa-save mr-1"></i>Create Gallery
                         </button>
                     </div>
                 </div>
             </form>
-            
-            <!-- Success/Error Messages -->
-            <div id="messageContainer" class="hidden fixed top-4 right-4 z-50 max-w-sm">
-                <div id="messageContent" class="p-4 rounded-md shadow-lg"></div>
-            </div>
         </div>
     </main>
-    
+
+    <!-- Toast container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
     <script>
-        // Use session-based authentication for gallery management
-        const apiBaseUrl = '/api';
-        
-        // Check if user is authenticated
-        const isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
-        
-        if (!isAuthenticated) {
+        // Auth guard
+        if (!{{ auth()->check() ? 'true' : 'false' }}) {
             window.location.href = '{{ route('admin.login') }}';
         }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('galleryForm');
-            const messageContainer = document.getElementById('messageContainer');
-            const messageContent = document.getElementById('messageContent');
-            const fileUpload = document.getElementById('file-upload');
-            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-            
-            // Debug: Log when DOM is ready
-            console.log('DOM Loaded');
 
-            // Handle file upload
-            fileUpload.addEventListener('change', function(e) {
-                const files = e.target.files;
-                
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    
-                    // Check file size (limit to 2MB to prevent packet size issues)
-                    if (file.size > 2 * 1024 * 1024) {
-                        showMessage('File size exceeds 2MB limit. Please choose a smaller image.', 'error');
-                        continue;
-                    }
-                    
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        
-                        reader.onload = function(e) {
-                            const imgContainer = document.createElement('div');
-                            imgContainer.className = 'relative group';
-                            
-                            imgContainer.innerHTML = `
-                                <img src="${e.target.result}" alt="Preview" class="w-full h-32 object-cover rounded-md">
-                                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
-                                    <i class="fas fa-trash text-white cursor-pointer" onclick="removeImage(this)"></i>
-                                </div>
-                                <input type="hidden" name="image_data[]" value="${e.target.result}">
-                                <input type="hidden" name="image_name[]" value="${file.name}">
-                            `;
-                            
-                            imagePreviewContainer.appendChild(imgContainer);
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    }
-                }
-            });
+        const MAX_FILE_SIZE_MB = 5;
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const fileUpload       = document.getElementById('file-upload');
+        const dropZone         = document.getElementById('dropZone');
+        const counter          = document.getElementById('imageCounter');
 
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                // Debug: Log form submission
-                console.log('Form submission triggered');
-                
-                // Validate that user is authenticated
-                if (!isAuthenticated) {
-                    showMessage('Authentication error: Please log in again.', 'error');
+        // ── Image count helper ───────────────────────────────────────────
+        function updateCounter() {
+            const count = previewContainer.querySelectorAll('.preview-item').length;
+            if (count > 0) {
+                counter.textContent = `${count} image${count !== 1 ? 's' : ''} selected`;
+                counter.classList.remove('hidden');
+            } else {
+                counter.classList.add('hidden');
+            }
+        }
+
+        // ── Process selected / dropped files ────────────────────────────
+        function processFiles(files) {
+            Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+
+                if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                    showToast(`"${file.name}" exceeds ${MAX_FILE_SIZE_MB} MB and was skipped.`, 'error');
                     return;
                 }
-                
-                // Get form data
-                const formData = {
-                    title: document.getElementById('title').value,
-                    event_name: document.getElementById('event_name').value,
-                    event_date: document.getElementById('event_date').value,
-                    description: document.getElementById('description').value,
-                    images: [], // This will be populated from uploaded images
-                    published: document.getElementById('published').checked
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'preview-item relative group aspect-square';
+                    wrapper.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview"
+                             class="w-full h-full object-cover rounded-md border border-gray-200">
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100
+                                    transition-opacity flex items-center justify-center rounded-md">
+                            <button type="button" onclick="removeImage(this)"
+                                    class="text-white bg-red-600 hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center shadow">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" name="image_data[]" value="${e.target.result}">
+                        <input type="hidden" name="image_name[]" value="${file.name}">`;
+                    previewContainer.appendChild(wrapper);
+                    updateCounter();
                 };
-
-                // Get selected files and their data
-                const imageDataInputs = document.querySelectorAll('input[name="image_data[]"]');
-                const imageNameInputs = document.querySelectorAll('input[name="image_name[]"]');
-                
-                const imageUrls = [];
-                
-                // Process each image
-                for (let i = 0; i < imageDataInputs.length; i++) {
-                    const imageData = imageDataInputs[i].value;
-                    const imageName = imageNameInputs[i].value;
-                    
-                    // Send the actual data URL - the backend will convert it to a file
-                    imageUrls.push(imageData);
-                }
-                
-                formData.images = imageUrls;
-                
-                // Show loading state
-                const submitButton = form.querySelector('button[type="submit"]');
-                const originalText = submitButton.innerHTML;
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
-
-                submitGallery(formData);
+                reader.readAsDataURL(file);
             });
+        }
 
-            function submitGallery(formData) {
-                // Debug: Log form data
-                console.log('Submitting form data:', formData);
-                
-                // Add CSRF token for session-based authentication
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                
-                fetch(`${apiBaseUrl}/event-galleries`, {
+        // ── File input change ────────────────────────────────────────────
+        fileUpload.addEventListener('change', function () {
+            processFiles(this.files);
+            this.value = ''; // reset so same file can be re-added after remove
+        });
+
+        // ── Drag & Drop ──────────────────────────────────────────────────
+        dropZone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            this.classList.add('border-blue-500', 'bg-blue-50');
+        });
+
+        dropZone.addEventListener('dragenter', function (e) {
+            e.preventDefault();
+            this.classList.add('border-blue-500', 'bg-blue-50');
+        });
+
+        dropZone.addEventListener('dragleave', function () {
+            this.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+
+        dropZone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            this.classList.remove('border-blue-500', 'bg-blue-50');
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) processFiles(files);
+        });
+
+        // ── Remove preview ───────────────────────────────────────────────
+        function removeImage(btn) {
+            btn.closest('.preview-item').remove();
+            updateCounter();
+        }
+
+        // ── Form submission ──────────────────────────────────────────────
+        document.getElementById('galleryForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const title      = document.getElementById('title').value.trim();
+            const event_name = document.getElementById('event_name').value.trim();
+            const event_date = document.getElementById('event_date').value;
+
+            if (!title || !event_name || !event_date) {
+                showToast('Please fill in all required fields.', 'error');
+                return;
+            }
+
+            const imageDataInputs = previewContainer.querySelectorAll('input[name="image_data[]"]');
+            const images = Array.from(imageDataInputs).map(i => i.value);
+
+            const formData = {
+                title,
+                event_name,
+                event_date,
+                description: document.getElementById('description').value,
+                images,
+                published: document.getElementById('published').checked,
+            };
+
+            const btn = document.getElementById('createGalleryBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating…';
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            try {
+                const response = await fetch('/api/event-galleries', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken
+                        'X-CSRF-TOKEN': csrfToken,
                     },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        showMessage('Gallery created successfully!', 'success');
-                        setTimeout(() => {
-                            window.location.href = '{{ route("admin.gallery.index") }}';
-                        }, 1500);
-                    } else {
-                        let errorMessage = 'Failed to create gallery.';
-                        if (result.message) {
-                            errorMessage = result.message;
-                        } else if (result.errors) {
-                            errorMessage = Object.values(result.errors).flat().join(', ');
-                        }
-                        showMessage(errorMessage, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showMessage('An error occurred while creating the gallery. Please check console for details.', 'error');
-                })
-                .finally(() => {
-                    // Restore button state
-                    const submitButton = form.querySelector('button[type="submit"]');
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Create Gallery';
-                    }
+                    body: JSON.stringify(formData),
                 });
-            }
 
-            function showMessage(message, type) {
-                messageContainer.classList.remove('hidden');
-                messageContainer.className = 'fixed top-4 right-4 z-50 max-w-sm ';
-                
-                if (type === 'success') {
-                    messageContainer.classList.add('bg-green-100', 'border', 'border-green-400', 'text-green-700');
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Gallery created successfully! Redirecting…', 'success');
+                    setTimeout(() => { window.location.href = '{{ route("admin.gallery.index") }}'; }, 1500);
                 } else {
-                    messageContainer.classList.add('bg-red-100', 'border', 'border-red-400', 'text-red-700');
+                    const msg = result.message
+                        || (result.errors ? Object.values(result.errors).flat().join(', ') : 'Failed to create gallery.');
+                    showToast(msg, 'error');
                 }
-                
-                messageContent.textContent = message;
-                
-                // Auto-hide after 5 seconds
-                setTimeout(() => {
-                    messageContainer.classList.add('hidden');
-                }, 5000);
+            } catch (err) {
+                console.error('Submit error:', err);
+                showToast('A network error occurred. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save mr-1"></i>Create Gallery';
             }
         });
-        
-        function removeImage(element) {
-            const imgContainer = element.closest('.relative');
-            imgContainer.remove();
+
+        // ── Toast notification ───────────────────────────────────────────
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            const colorClass = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            toast.className = `pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-md shadow-lg text-white text-sm ${colorClass}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i><span>${message}</span>`;
+            document.getElementById('toastContainer').appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.4s';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 400);
+            }, 5000);
         }
     </script>
 </body>

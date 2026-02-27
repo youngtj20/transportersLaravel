@@ -148,14 +148,15 @@
                                                 </button>
                                             </div>
                                             
-                                            <!-- Social Sharing Buttons -->
+                                            <!-- Social Sharing Buttons (compact) -->
                                             <div class="mt-2">
-                                                <x-social-share 
-                                                    :url="route('blog.show', $post->slug)" 
-                                                    :title="$post->title" 
-                                                    :description="$post->excerpt ?? $post->content" 
-                                                    :image="$post->featured_image ?? null" 
-                                                    type="post" />
+                                                <x-social-share
+                                                    :url="route('blog.show', $post->slug)"
+                                                    :title="$post->title"
+                                                    :description="$post->excerpt ?? $post->content"
+                                                    :image="$post->featured_image ?? null"
+                                                    type="post"
+                                                    :compact="true" />
                                             </div>
                                             
                                             <a href="{{ route('blog.show', $post->slug) }}" class="text-green-600 hover:text-green-800 font-medium">

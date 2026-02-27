@@ -1,189 +1,159 @@
-@props(['url', 'title', 'description', 'image' => null, 'type' => 'post'])
+@props(['url', 'title', 'description' => '', 'image' => null, 'type' => 'post', 'compact' => false])
 
-<div class="social-sharing-component">
-    <div class="flex flex-wrap gap-2">
-        <!-- Facebook -->
-        <a href="#" 
-           onclick="shareToSocial('facebook', '{{ $url }}', '{{ addslashes($title) }}', '{{ addslashes($description ?? '') }}', '{{ $image ?? '' }}'); return false;"
-           class="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-           title="Share on Facebook">
-            <i class="fab fa-facebook-f mr-2"></i>
-            <span>Facebook</span>
-        </a>
-        
-        <!-- Twitter/X -->
-        <a href="#" 
-           onclick="shareToSocial('twitter', '{{ $url }}', '{{ addslashes($title) }}', '{{ addslashes($description ?? '') }}', '{{ $image ?? '' }}'); return false;"
-           class="flex items-center px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
-           title="Share on Twitter">
-            <i class="fab fa-twitter mr-2"></i>
-            <span>Twitter</span>
-        </a>
-        
-        <!-- LinkedIn -->
-        <a href="#" 
-           onclick="shareToSocial('linkedin', '{{ $url }}', '{{ addslashes($title) }}', '{{ addslashes($description ?? '') }}', '{{ $image ?? '' }}'); return false;"
-           class="flex items-center px-3 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors text-sm"
-           title="Share on LinkedIn">
-            <i class="fab fa-linkedin-in mr-2"></i>
-            <span>LinkedIn</span>
-        </a>
-        
-        <!-- WhatsApp -->
-        <a href="#" 
-           onclick="shareToSocial('whatsapp', '{{ $url }}', '{{ addslashes($title) }}', '{{ addslashes($description ?? '') }}', '{{ $image ?? '' }}'); return false;"
-           class="flex items-center px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-           title="Share on WhatsApp">
-            <i class="fab fa-whatsapp mr-2"></i>
-            <span>WhatsApp</span>
-        </a>
-        
-        <!-- Telegram -->
-        <a href="#" 
-           onclick="shareToSocial('telegram', '{{ $url }}', '{{ addslashes($title) }}', '{{ addslashes($description ?? '') }}', '{{ $image ?? '' }}'); return false;"
-           class="flex items-center px-3 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors text-sm"
-           title="Share on Telegram">
-            <i class="fab fa-telegram mr-2"></i>
-            <span>Telegram</span>
-        </a>
-        
-        <!-- Email -->
-        <a href="mailto:?subject={{ urlencode($title) }}&body={{ urlencode($description . ' ' . $url) }}" 
-           class="flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
-           title="Share via Email">
-            <i class="fas fa-envelope mr-2"></i>
-            <span>Email</span>
-        </a>
-        
-        <!-- Copy Link -->
-        <a href="#" 
-           onclick="copyToClipboard('{{ $url }}'); return false;"
-           class="flex items-center px-3 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-sm"
-           title="Copy link to clipboard">
-            <i class="fas fa-link mr-2"></i>
-            <span>Copy Link</span>
-        </a>
+@php
+    $eu = urlencode($url);
+    $et = urlencode($title);
+    $ed = urlencode(Str::limit(strip_tags($description), 160));
+
+    $platforms = [
+        'facebook' => [
+            'href'  => "https://www.facebook.com/sharer/sharer.php?u={$eu}",
+            'bg'    => '#1877F2', 'hover' => '#166fe5',
+            'icon'  => 'fab fa-facebook-f',
+            'label' => 'Facebook',
+        ],
+        'twitter' => [
+            'href'  => "https://twitter.com/intent/tweet?url={$eu}&text={$et}",
+            'bg'    => '#000000', 'hover' => '#333333',
+            'icon'  => 'fab fa-twitter',
+            'label' => 'Twitter / X',
+        ],
+        'whatsapp' => [
+            'href'  => "https://api.whatsapp.com/send?text={$et}%20{$eu}",
+            'bg'    => '#25D366', 'hover' => '#1ebe5d',
+            'icon'  => 'fab fa-whatsapp',
+            'label' => 'WhatsApp',
+        ],
+        'telegram' => [
+            'href'  => "https://t.me/share/url?url={$eu}&text={$et}",
+            'bg'    => '#2AABEE', 'hover' => '#229ed9',
+            'icon'  => 'fab fa-telegram',
+            'label' => 'Telegram',
+        ],
+        'linkedin' => [
+            'href'  => "https://www.linkedin.com/sharing/share-offsite/?url={$eu}",
+            'bg'    => '#0A66C2', 'hover' => '#004182',
+            'icon'  => 'fab fa-linkedin-in',
+            'label' => 'LinkedIn',
+        ],
+        'email' => [
+            'href'  => "mailto:?subject={$et}&body={$ed}%20{$eu}",
+            'bg'    => '#4B5563', 'hover' => '#374151',
+            'icon'  => 'fas fa-envelope',
+            'label' => 'Email',
+        ],
+    ];
+@endphp
+
+@if($compact)
+    {{-- ── Compact: icon-only (used in cards / lists) ── --}}
+    <div class="flex items-center flex-wrap gap-1.5">
+        @foreach($platforms as $key => $p)
+            @if(in_array($key, ['facebook','twitter','whatsapp','telegram']))
+            <a href="{{ $p['href'] }}"
+               target="_blank" rel="noopener noreferrer"
+               title="{{ $p['label'] }}"
+               aria-label="Share on {{ $p['label'] }}"
+               style="background:{{ $p['bg'] }}"
+               onmouseover="this.style.background='{{ $p['hover'] }}'"
+               onmouseout="this.style.background='{{ $p['bg'] }}'"
+               class="w-8 h-8 flex items-center justify-center text-white rounded-lg transition-transform duration-150 hover:scale-110">
+                <i class="{{ $p['icon'] }} text-xs"></i>
+            </a>
+            @endif
+        @endforeach
+        <button type="button"
+                data-copy-url="{{ $url }}"
+                title="Copy link" aria-label="Copy link"
+                class="copy-link-btn w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-transform duration-150 hover:scale-110">
+            <i class="fas fa-link text-xs"></i>
+        </button>
     </div>
-</div>
 
+@else
+    {{-- ── Full: buttons with text labels (used on single post / post detail page) ── --}}
+    <div class="flex flex-wrap gap-2">
+        @foreach($platforms as $key => $p)
+        <a href="{{ $p['href'] }}"
+           target="_blank" rel="noopener noreferrer"
+           title="{{ $p['label'] }}"
+           style="background:{{ $p['bg'] }}"
+           onmouseover="this.style.background='{{ $p['hover'] }}'"
+           onmouseout="this.style.background='{{ $p['bg'] }}'"
+           class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg text-sm font-medium transition-transform duration-150 hover:scale-105">
+            <i class="{{ $p['icon'] }}"></i>
+            <span>{{ $p['label'] }}</span>
+        </a>
+        @endforeach
+        <button type="button"
+                data-copy-url="{{ $url }}"
+                class="copy-link-btn inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium transition-transform duration-150 hover:scale-105">
+            <i class="fas fa-link"></i>
+            <span>Copy Link</span>
+        </button>
+    </div>
+@endif
+
+@once
 <script>
-function shareToSocial(platform, url, title, description, image) {
-    const encodedUrl = encodeURIComponent(url);
-    const encodedTitle = encodeURIComponent(title);
-    
-    let shareUrl = '';
-    
-    switch(platform) {
-        case 'facebook':
-            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-            break;
-        case 'twitter':
-            shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-            break;
-        case 'linkedin':
-            shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-            break;
-        case 'whatsapp':
-            shareUrl = `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`;
-            break;
-        case 'telegram':
-            shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
-            break;
-        default:
-            return false;
-    }
-    
-    // Open in popup window for better user experience
-    const popupWidth = 600;
-    const popupHeight = 400;
-    const left = (screen.width - popupWidth) / 2;
-    const top = (screen.height - popupHeight) / 2;
-    
-    window.open(
-        shareUrl,
-        'social-share',
-        `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-    
-    return false;
-}
-
-function copyToClipboard(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => {
-            showCopyNotification('Link copied to clipboard!');
-        }).catch(() => {
-            fallbackCopyTextToClipboard(text);
-        });
-    } else {
-        fallbackCopyTextToClipboard(text);
-    }
-    
-    return false;
-}
-
-function fallbackCopyTextToClipboard(text) {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";
-    textArea.style.left = "-999999px";
-    textArea.style.top = "-999999px";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-        document.execCommand('copy');
-        showCopyNotification('Link copied to clipboard!');
-    } catch (err) {
-        console.error('Fallback: Oops, unable to copy', err);
-        // Show prompt as last resort
-        prompt('Copy to clipboard: Ctrl+C, Enter', text);
-    }
-    
-    document.body.removeChild(textArea);
-}
-
-function showCopyNotification(message) {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-    notification.textContent = message;
-    notification.style.transition = 'opacity 0.3s ease-in-out';
-    
-    document.body.appendChild(notification);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Enhanced Web Share API support
-function shareNative(title, text, url, image) {
-    if (navigator.share) {
-        const shareData = {
-            title: title,
-            text: text,
-            url: url
-        };
-        
-        // Add image if available and supported
-        if (image && navigator.canShare && navigator.canShare({files: [new File([], 'image.jpg')]})) {
-            shareData.files = [image];
+(function () {
+    /* ── Clipboard copy ───────────────────────────────────── */
+    function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text)
+                .then(function () { toast('Link copied to clipboard!'); })
+                .catch(function () { legacyCopy(text); });
+        } else {
+            legacyCopy(text);
         }
-        
-        navigator.share(shareData)
-            .then(() => console.log('Shared successfully'))
-            .catch((error) => console.log('Error sharing:', error));
-    } else {
-        // Fallback to traditional sharing
-        showCopyNotification('Native sharing not available. Use the buttons above.');
     }
-}
+
+    function legacyCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try { document.execCommand('copy'); toast('Link copied to clipboard!'); }
+        catch (e) { window.prompt('Copy this link (Ctrl+C / Cmd+C):', text); }
+        document.body.removeChild(ta);
+    }
+
+    /* ── Toast notification ───────────────────────────────── */
+    function toast(msg) {
+        // Remove existing toast
+        var old = document.getElementById('__ss_toast');
+        if (old) old.remove();
+
+        var el = document.createElement('div');
+        el.id = '__ss_toast';
+        el.textContent = msg;
+        el.style.cssText = [
+            'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
+            'z-index:99999', 'background:#111827', 'color:#fff',
+            'padding:10px 22px', 'border-radius:999px', 'font-size:14px',
+            'font-weight:500', 'box-shadow:0 4px 20px rgba(0,0,0,.3)',
+            'pointer-events:none', 'opacity:1', 'transition:opacity .4s'
+        ].join(';');
+        document.body.appendChild(el);
+        setTimeout(function () {
+            el.style.opacity = '0';
+            setTimeout(function () { el.remove(); }, 400);
+        }, 2500);
+    }
+
+    /* Expose for gallery page and any other pages that need it */
+    window.SS = { copy: copyText, toast: toast };
+
+    /* ── Delegated click for copy buttons ────────────────── */
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.copy-link-btn[data-copy-url]');
+        if (btn) {
+            e.preventDefault();
+            copyText(btn.getAttribute('data-copy-url'));
+        }
+    });
+})();
 </script>
+@endonce
