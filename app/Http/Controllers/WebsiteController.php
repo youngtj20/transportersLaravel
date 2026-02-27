@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\MenuItem;
 use App\Models\Page;
+use App\Models\Event;
 
 class WebsiteController extends Controller
 {
@@ -56,8 +57,24 @@ class WebsiteController extends Controller
     
     public function events()
     {
+        $now = now();
+
+        $upcomingEvents = Event::where('published', true)
+            ->where('event_date', '>=', $now)
+            ->with('author')
+            ->orderBy('event_date', 'asc')
+            ->get();
+
+        $pastEvents = Event::where('published', true)
+            ->where('event_date', '<', $now)
+            ->with('author')
+            ->orderBy('event_date', 'desc')
+            ->take(12)
+            ->get();
+
         $menuItems = MenuItem::where('enabled', true)->orderBy('order')->get();
-        return view('website.events', compact('menuItems'));
+
+        return view('website.events', compact('menuItems', 'upcomingEvents', 'pastEvents'));
     }
     
     public function blog(Request $request)

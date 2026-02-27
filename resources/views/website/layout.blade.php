@@ -362,6 +362,8 @@
         </div>
     </footer>
 
+    @stack('scripts')
+
     <!-- Mobile Menu Script -->
     <script>
         document.getElementById('mobile-menu-button').addEventListener('click', function() {
