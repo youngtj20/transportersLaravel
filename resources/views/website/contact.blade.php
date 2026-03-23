@@ -47,45 +47,6 @@
                             </div>
                         </div>
                         
-                        <!-- Lagos Office -->
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                                    <i class="fas fa-city text-blue-600"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-900 mb-1">Lagos Office</h4>
-                                <p class="text-gray-600 mb-2">
-                                    456 Victoria Island<br>
-                                    Lagos, Nigeria
-                                </p>
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-phone mr-2"></i>
-                                    <span>+234 800 LAGOS</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Kano Office -->
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                                    <i class="fas fa-warehouse text-purple-600"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-900 mb-1">Kano Office</h4>
-                                <p class="text-gray-600 mb-2">
-                                    789 Aminu Kano Way<br>
-                                    Kano, Nigeria
-                                </p>
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-phone mr-2"></i>
-                                    <span>+234 800 KANO</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
