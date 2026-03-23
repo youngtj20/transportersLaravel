@@ -71,7 +71,7 @@
                             </div>
                             <div>
                                 <p class="font-medium text-gray-900">Call Us</p>
-                                <p class="text-gray-600 text-sm">+234 800 TRANSPORT</p>
+                                <p class="text-gray-600 text-sm">+2347088743373</p>
                             </div>
                         </a>
                         
