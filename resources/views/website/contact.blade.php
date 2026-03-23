@@ -36,12 +36,13 @@
                             <div>
                                 <h4 class="font-bold text-gray-900 mb-1">Headquarters</h4>
                                 <p class="text-gray-600 mb-2">
-                                    Plot 123, Diplomatic Zone<br>
+                                    House 4 Tonimas Estate Katampe,
+                                    Off Kubwa Expressway<br>
                                     Abuja, Nigeria
                                 </p>
                                 <div class="flex items-center text-sm text-gray-500">
                                     <i class="fas fa-phone mr-2"></i>
-                                    <span>+234 800 TRANSPORT</span>
+                                    <span>+2347088743373</span>
                                 </div>
                             </div>
                         </div>
